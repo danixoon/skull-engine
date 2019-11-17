@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "target": "es6",
+    "module": "es2015",
+    "outDir": "build",
+    "rootDir": "src"
+  },
+  "include": ["src/**/*"]
+}
