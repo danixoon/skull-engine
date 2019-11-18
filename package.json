@@ -12,6 +12,7 @@
     "@babel/preset-env": "^7.7.1"
   },
   "dependencies": {
+    "serve": "^11.2.0",
     "ts-node": "^8.5.2",
     "typescript": "^3.7.2"
   }
