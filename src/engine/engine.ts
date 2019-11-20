@@ -1,5 +1,6 @@
-import { generateId, shuffle, Vector, addVector, subVector, multVector, multVectorValues } from "./helpers.js";
-import { GameObject, IGameObjectProps } from "./gameObject.js";
+import { generateId, shuffle, Vector, addVector, subVector, multVector, multVectorValues } from "./helpers";
+import { GameObject, IGameObjectProps } from "./gameObject";
+import { GameInput } from "./input";
 
 export const RESOURCE_PATH = "resources/";
 export const generateName = () => {
@@ -8,61 +9,24 @@ export const generateName = () => {
   return shuffle(Date.now() + generateId(97, 122, 5)).join("");
 };
 
+export type GameEventType = "draw" | "update" | "physics_update" | "start" | "init" | "dispose";
 export interface IGameEventLoop {
-  onStart(): void;
-  onUpdate(delta: number): void;
-  onDispose(): void;
-}
+  onEvent(event: GameEventType, ...args: any[]): void;
 
-export interface IDrawable {
-  onDraw(ctx: CanvasRenderingContext2D): void;
-}
-
-export class GameInput {
-  private keypress = new Set();
-  private keydown = new Set();
-  private keyup = new Set();
-
-  public scale: number = 1;
-
-  private onKeyDown = (key: KeyboardEvent) => {
-    if (this.keypress.has(key.code)) return;
-    this.keypress.add(key.code);
-    this.keydown.add(key.code);
-  };
-  private onKeyUp = (key: KeyboardEvent) => {
-    this.keypress.delete(key.code);
-    this.keyup.add(key.code);
-  };
-  private onMouseMove = (ev: MouseEvent) => {
-    const s = this.scale;
-    this._mousePosition = [Math.floor(ev.x / s), Math.floor(ev.y / s)];
-  };
-
-  flushAfterUpdate = () => {
-    this.keydown.clear();
-    this.keyup.clear();
-  };
-
-  isKeyPress = (keycode: string) => this.keypress.has(keycode);
-  isKeyUp = (keycode: string) => this.keyup.has(keycode);
-  isKeyDown = (keycode: string) => this.keydown.has(keycode);
-
-  private _mousePosition: Vector = [0, 0];
-  get mousePosition(): Vector {
-    return this._mousePosition;
-  }
-
-  constructor() {
-    window.addEventListener("keydown", this.onKeyDown);
-    window.addEventListener("keyup", this.onKeyUp);
-    window.addEventListener("mousemove", this.onMouseMove);
-  }
+  // onStart(): void;
+  // onUpdate(delta: number): void;
+  // onPhisycsUpdate(delta: number): void;
+  // onDispose(): void;
 }
 
 export class GameEngine {
+  private disposedObjects: GameObject[] = [];
+  private createdObjects: GameObject[] = [];
+
   gameObjects = new Map<string, GameObject>();
   input = new GameInput();
+  ctx: CanvasRenderingContext2D;
+  colliderMap: Vector[] = [];
 
   camera: {
     position: Vector;
@@ -73,7 +37,6 @@ export class GameEngine {
     angle: 0,
     pivot: [0.5, 0.5]
   };
-  ctx: CanvasRenderingContext2D;
 
   static loadImage(src: string) {
     const img = new Image();
@@ -106,13 +69,14 @@ export class GameEngine {
       .sort((a, b) => (a.sortLayer > b.sortLayer ? 1 : -1))
       .forEach(o => {
         // Если о старте не сообщили - стартуем
-        if (!o.started) (o.started = true) && o.onStart();
+        if (!o.started) (o.started = true) && o.onEvent("start");
         // В ином случае посылаем onUpdate
         else {
           o.components.forEach(c => {
-            if (!c.started) (c.started = true) && c.onStart();
+            if (!c.started) (c.started = true) && c.onEvent("start");
             else {
-              c.onUpdate(delta);
+              c.onEvent("update", delta);
+              c.onEvent("physics_update", delta);
               ctx.save();
 
               ctx.translate(Math.floor(ctx.canvas.width * this.camera.pivot[0]), Math.floor(ctx.canvas.height * this.camera.pivot[1]));
@@ -124,15 +88,37 @@ export class GameEngine {
 
               ctx.rotate(camera.angle);
               // И рисуем
-              c.onDraw(ctx);
+              c.onEvent("draw", ctx);
 
               ctx.restore();
             }
           });
-          o.onUpdate(delta);
+          o.onEvent("update", delta);
           this.input.flushAfterUpdate();
         }
       });
+
+    for (let o of this.createdObjects) {
+      o.onEvent("init");
+      this.gameObjects.set(o.name, o);
+      // console.log("created.. but objects: ", this.createdObjects);
+    }
+
+    // Уничтожаем все объекты в очереди
+    for (let o of this.disposedObjects) {
+      o.onEvent("dispose");
+      this.gameObjects.delete(o.name);
+    }
+
+    // this.createdObjects.forEach(o => {
+    //   o.onEvent("init");
+    //   this.gameObjects.set(o.name, o);
+    //   console.log("created.. but objects: ", this.createdObjects);
+    // });
+
+    // this.disposedObjects.forEach(o => {});
+    this.createdObjects = [];
+    this.disposedObjects = [];
   };
 
   init({ width, height, smoothImage, scale }: { width?: number; height?: number; smoothImage?: boolean; scale: number }) {
@@ -176,11 +162,12 @@ export class GameEngine {
     if (this.gameObjects.has(name)) throw new Error(`game object with name <${name}> already exists`);
     if (Object.getPrototypeOf(GameObjectType) !== GameObject) throw new Error(`game object doesn't inherit GameObject class`);
 
-    console.log(`creating game object with name <${name}>`);
+    // console.log(`creating game object with name <${name}>`);
 
     const gameObject = new GameObjectType(this, props || {}, name);
-    this.gameObjects.set(name, gameObject);
+    // this.gameObjects.set(name, gameObject);
 
+    this.createdObjects.push(gameObject);
     return gameObject;
   };
 
@@ -192,9 +179,7 @@ export class GameEngine {
     const gameObject = this.gameObjects.get(name);
     if (!gameObject) throw new Error(`game object with name <${name}> doesn't exists`);
 
-    // Сообщаем об удалении объекта
-    gameObject.onDispose();
-
-    this.gameObjects.delete(name);
+    // Добавляем объект в очередь удаления
+    this.disposedObjects.push(gameObject);
   };
 }

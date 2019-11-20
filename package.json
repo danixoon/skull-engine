@@ -5,15 +5,20 @@
   "license": "MIT",
   "scripts": {
     "start": "ts-node src/index.ts",
-    "app:inspect": "node --inspect=5858 -r ts-node/register src/index.ts",
+    "app:webpack": "yarn cross-env yarn webpack --mode development",
     "app:dev": "nodemon"
   },
   "devDependencies": {
-    "@babel/preset-env": "^7.7.1"
+    "@babel/preset-env": "^7.7.1",
+    "webpack-cli": "^3.3.10"
   },
   "dependencies": {
+    "cross-env": "^6.0.3",
+    "nodemon": "^1.19.4",
     "serve": "^11.2.0",
+    "ts-loader": "^6.2.1",
     "ts-node": "^8.5.2",
-    "typescript": "^3.7.2"
+    "typescript": "^3.7.2",
+    "webpack": "^4.41.2"
   }
 }

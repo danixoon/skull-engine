@@ -1,6 +1,6 @@
-import { Vector, multVectorValues, multVector, degToRad, addMatrix } from "./helpers.js";
-import { IGameEventLoop, GameEngine } from "./engine.js";
-import { GameComponent } from "./components/index.js";
+import { Vector, multVectorValues, multVector, degToRad, addMatrix } from "./helpers";
+import { GameComponent } from "./components/index";
+import { IGameEventLoop, GameEngine, GameEventType } from "./engine";
 
 export type GameComponentConstructor<T extends GameComponent> = new <P>(gameObject: GameObject, props?: Partial<P>) => T;
 export type Matrix2DTransform = [number, number, number, number, number, number];
@@ -103,11 +103,15 @@ export abstract class GameObject implements IGameObject {
     const prot = Object.getPrototypeOf(componentType);
     if (prot !== GameComponent) throw "component doesn't inherit base class GameComponent";
     const component = new componentType(this);
+    // Инициализируем компонент
+    component.onEvent("init");
     this.components.add(component);
 
     return component;
   };
   removeComponent = <T extends GameComponent>(component: T) => {
+    // Освобождаем компонент
+    component.onEvent("dispose");
     this.components.delete(component);
   };
   getComponents = <T extends GameComponent>(componentType: GameComponentConstructor<T>): T[] => {
@@ -133,7 +137,24 @@ export abstract class GameObject implements IGameObject {
     this.onUpdate(delta);
   };
 
-  onStart = () => {};
-  onUpdate = (delta: number) => {};
-  onDispose = () => {};
+  public onEvent = (e: GameEventType, ...args: any[]) => {
+    switch (e) {
+      case "init":
+        return this.onInit();
+      case "start":
+        return this.onStart();
+      case "update":
+        return this.onUpdate(args[0]);
+      case "physics_update":
+        return this.onPhysicsUpdate(args[0]);
+      case "dispose":
+        return this.onDispose();
+    }
+  };
+
+  protected onInit = () => {};
+  protected onStart = () => {};
+  protected onUpdate = (delta: number) => {};
+  protected onPhysicsUpdate = (delta: number) => {};
+  protected onDispose = () => {};
 }

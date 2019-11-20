@@ -2,8 +2,10 @@
   "compilerOptions": {
     "strict": true,
     "target": "es6",
-    "module": "es2015",
+    "module": "commonjs",
     "outDir": "build",
+    "sourceMap": true,
+    "allowJs": true,
     "rootDir": "src"
   },
   "include": ["src/**/*"]
