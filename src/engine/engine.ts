@@ -1,5 +1,5 @@
 import { generateId, shuffle, Vector, addVector, subVector, multVector, multVectorValues } from "./helpers";
-import { GameObject, IGameObjectProps } from "./gameObject";
+import { GameObject, IGameObjectProps, ITransform, Transform } from "./gameObject";
 import { GameInput } from "./input";
 
 export const RESOURCE_PATH = "resources/";
@@ -19,14 +19,57 @@ export interface IGameEventLoop {
   // onDispose(): void;
 }
 
+export abstract class ColliderBounds {
+  constructor(public transform: Transform) {}
+  public abstract isCollide = (pos: Vector): boolean => false;
+}
+
+export class RectColliderBounds extends ColliderBounds {
+  constructor(transform: Transform, public props: { size: Vector; offset: Vector } = { size: [16, 16], offset: [0, 0] }) {
+    super(transform);
+  }
+  public isCollide = (pos: Vector): boolean => {
+    const { pivot, position, scale } = this.transform;
+    const { size, offset } = this.props;
+
+    const pivotOffset = this.transform.getPivotOffset(size);
+    const scaledOffset = multVectorValues(pivotOffset, scale);
+    const positionOffset = addVector(position, addVector(size, scaledOffset));
+
+    const transformedRect = addVector(position, addVector(positionOffset, multVectorValues(offset, scale)));
+    const [px, py] = subVector(transformedRect, pos);
+
+    // И проверяем столкновение с помощью проекции
+    return px >= 0 && px <= size[0] && py >= 0 && py <= size[1];
+
+    return true;
+
+    // Определяем вектор, идентифицирующий размер коллайдера
+    // let size = subVector(size[1], size[0]);
+    // Трансформируем размер относительно объекта, учитывая центрирование (pivot) и масштаб
+    // let transformSize = //multVectorValues(subVector(addVector(size, offset), multVectorValues(size, pivot)), scale);
+
+    // // Проводим размеры коллайдера объекта относительно его позиции
+    // const bounds = addVector(position, transformSize);
+    // // Проецируем векторы
+    // const [px, py] = subVector(bounds, pos);
+
+    // // И проверяем столкновение с помощью проекции
+    // return px >= 0 && px <= bounds[0] && py >= 0 && py <= bounds[1];
+  };
+}
+export class GamePhysics {
+  colliderMap = new Map<number, ColliderBounds[]>();
+}
+
 export class GameEngine {
   private disposedObjects: GameObject[] = [];
   private createdObjects: GameObject[] = [];
 
   gameObjects = new Map<string, GameObject>();
   input = new GameInput();
+  physics = new GamePhysics();
   ctx: CanvasRenderingContext2D;
-  colliderMap: Vector[] = [];
 
   camera: {
     position: Vector;
@@ -37,6 +80,8 @@ export class GameEngine {
     angle: 0,
     pivot: [0.5, 0.5]
   };
+
+  // physics =
 
   static loadImage(src: string) {
     const img = new Image();
@@ -155,8 +200,8 @@ export class GameEngine {
   };
 
   createObject = <T extends GameObject>(
-    GameObjectType: new (engine: GameEngine, props: Partial<IGameObjectProps>, name: string) => T,
-    props?: Partial<IGameObjectProps>,
+    GameObjectType: new (engine: GameEngine, transform: Partial<IGameObjectProps>, name: string) => T,
+    props?: Partial<ITransform>,
     name: string = generateName()
   ) => {
     if (this.gameObjects.has(name)) throw new Error(`game object with name <${name}> already exists`);
@@ -164,7 +209,8 @@ export class GameEngine {
 
     // console.log(`creating game object with name <${name}>`);
 
-    const gameObject = new GameObjectType(this, props || {}, name);
+    const defaultProps = GameObject.getDefaultProps();
+    const gameObject = new GameObjectType(this, { ...defaultProps, transform: { ...defaultProps.transform, ...props } }, name);
     // this.gameObjects.set(name, gameObject);
 
     this.createdObjects.push(gameObject);

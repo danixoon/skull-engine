@@ -17,7 +17,7 @@ export class ShapeComponent extends GameComponent<IShapeProps> {
     const { gameObject } = this;
     const { size, color } = this.props;
     if (!gameObject) return;
-    const [x, y] = gameObject.getPivotOffset(size);
+    const [x, y] = gameObject.transform.getPivotOffset(size);
     const [w, h] = size;
 
     ctx.fillStyle = color;

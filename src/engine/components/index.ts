@@ -1,14 +1,15 @@
-import { IGameEventLoop, GameEventType } from "../engine";
+import { IGameEventLoop, GameEventType, GameEngine } from "../engine";
 import { GameObject } from "../gameObject";
 
 export interface IGameComponent<T> extends IGameEventLoop {
   props: T;
+  engine: GameEngine;
 }
 
 export abstract class GameComponent<T = any> implements IGameComponent<T> {
   started: boolean = false;
   props: T = {} as T;
-  constructor(public gameObject: GameObject) {}
+  constructor(public engine: GameEngine, public gameObject: GameObject) {}
   public setProps = (props: Partial<T>) => {
     this.props = { ...this.props, ...props };
   };
