@@ -1,12 +1,12 @@
 import { Vector } from "../helpers";
 import { GameComponent } from "./index";
 
-export interface IShapeProps {
+export interface IRectShapeProps {
   color: string;
   size: Vector;
 }
-export class ShapeComponent extends GameComponent<IShapeProps> {
-  props: IShapeProps = {
+export class RectShapeComponent extends GameComponent<IRectShapeProps> {
+  props: IRectShapeProps = {
     color: "#000000",
     size: [100, 100]
   };

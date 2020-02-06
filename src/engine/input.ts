@@ -9,6 +9,7 @@ export class GameInput {
 
   private onKeyDown = (key: KeyboardEvent) => {
     if (this.keypress.has(key.code)) return;
+    console.log("keydown: ", key.code);
     this.keypress.add(key.code);
     this.keydown.add(key.code);
   };

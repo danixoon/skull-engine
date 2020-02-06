@@ -1,4 +1,4 @@
-import { Vector, multVectorValues, multVector, degToRad, addMatrix } from "./helpers";
+import { Vector, multVectorValues, multVector, degToRad, addMatrix, createMatrix as createTransformMatrix, multMatrix, addVector, rotateVector, subVector } from "./helpers";
 import { GameComponent } from "./components/index";
 import { IGameEventLoop, GameEngine, GameEventType } from "./engine";
 
@@ -35,9 +35,7 @@ export class Transform implements ITransform {
   };
 
   pointToLocal = (point: Vector) => {};
-  vectorToLocal = (vector: Vector) => {
-
-  };
+  vectorToLocal = (vector: Vector) => {};
 }
 
 export interface IGameObject extends IGameObjectProps, IGameEventLoop {
@@ -59,23 +57,28 @@ export abstract class GameObject implements IGameObject {
 
   readonly name: string;
 
-  // get transformMatrix(): Matrix2DTransform {
-  //   let transform = this.localTransformMatrix;
-  //   if (this.parent) {
-  //     transform =  //addMatrix(transform, this.parent.transformMatrix) as Matrix2DTransform;
-  //   }
-  //   return transform;
-  // }
+  get transformMatrix(): Matrix2DTransform {
+    const getParentTransforms = (object: GameObject): ITransform => {
+      if (!object.parent) return object.transform;
+      const { angle, position, localPosition, scale } = getParentTransforms(object.parent);
+      let t: ITransform = {
+        angle: angle + this.transform.angle,
+        pivot: this.transform.pivot,
+        localPosition: this.transform.localPosition,
+        position: subVector(addVector(rotateVector(this.transform.position, angle), position), this.transform.position), //, rotateVector(subVector(this.transform.position, position), angle)), //subVector(rotateVector(subVector(position, this.transform.position), angle), this.transform.position),
+        scale: multVectorValues(scale, this.transform.scale)
+      };
+      // t.position = rotateVector(t.position, t.angle);
+      return t;
+    };
+    // object.parent ? [object.localTransformMatrix].concat(getParentMatrices(object.parent)) : [object.localTransformMatrix];
+    const matrix = getParentTransforms(this); //getParentMatrices(this).reduceRight((p, v) => addMatrix(p, v) as Matrix2DTransform);
+    return createTransformMatrix(matrix);
+    // return this.parent ? (multMatrix(this.parent.localTransformMatrix, localMatrix, 2) as Matrix2DTransform) : localMatrix;
+  }
 
   get localTransformMatrix(): Matrix2DTransform {
-    const { angle, position, scale } = this.transform;
-    const radAngle = degToRad(angle);
-    const cosine = Math.cos(radAngle);
-    const sine = Math.sin(radAngle);
-    const [x, y] = position;
-    const [sx, sy] = scale;
-
-    return [cosine * sx, sine * sx, -sine * sy, cosine * sy, Math.floor(x), Math.floor(y)];
+    return createTransformMatrix(this.transform);
   }
 
   transform = new Transform();

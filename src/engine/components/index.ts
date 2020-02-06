@@ -10,8 +10,9 @@ export abstract class GameComponent<T = any> implements IGameComponent<T> {
   started: boolean = false;
   props: T = {} as T;
   constructor(public engine: GameEngine, public gameObject: GameObject) {}
-  public setProps = (props: Partial<T>) => {
+  public setProps = (props: Partial<T>): this => {
     this.props = { ...this.props, ...props };
+    return this;
   };
   public onEvent = (e: GameEventType, ...args: any[]) => {
     switch (e) {
@@ -35,5 +36,5 @@ export abstract class GameComponent<T = any> implements IGameComponent<T> {
 }
 
 export { AnimatorComponent, IAnimatorProps } from "./animator";
-export { ShapeComponent, IShapeProps } from "./shape";
+export { RectShapeComponent as ShapeComponent, IRectShapeProps as IShapeProps } from "./shape";
 export { SpriteComponent, ISpriteProps } from "./sprite";

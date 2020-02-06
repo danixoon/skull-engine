@@ -1,8 +1,8 @@
-import { addVector, Vector, multVector, normalizeVector, lerpVector, subVector, magnitudeVector } from "./engine/helpers";
-import { GameObject } from "./engine/gameObject";
-import { AnimatorComponent, SpriteComponent } from "./engine/components";
-import { GameEngine } from "./engine/engine";
-import { PhysicsComponent } from "./engine/components/physics";
+import { addVector, Vector, multVector, normalizeVector, lerpVector, subVector, magnitudeVector, multMatrix } from "../../engine/helpers";
+import { GameObject } from "../../engine/gameObject";
+import { AnimatorComponent, SpriteComponent } from "../../engine/components";
+import { GameEngine } from "../../engine/engine";
+import { PhysicsComponent } from "../../engine/components/physics";
 
 export class Player extends GameObject {
   //@ts-ignore
@@ -11,7 +11,7 @@ export class Player extends GameObject {
   anim: AnimatorComponent;
   //@ts-ignore
   physics: PhysicsComponent;
-  
+
   speed = 1.5;
 
   onInit = () => {
@@ -85,7 +85,9 @@ export class GameController extends GameObject {
     engine.setParent(sword, player);
   };
   onUpdate = () => {
-    // if (this.engine.input.isKeyPress("KeyF")) this.engine.createObject(Player, { position: this.engine.input.mousePosition });
+    if (this.engine.input.isKeyPress("KeyF")) {
+      console.log(multMatrix([1, 0, 0, 1], [1, 2, 3, 4], 2));
+    }
     // if (this.engine.input.isKeyDown("KeyX")) this.engine.createObject(PlayerSword, { position: this.engine.input.mousePosition });
   };
 }

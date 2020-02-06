@@ -1,5 +1,6 @@
+import { start as startKnightDemo } from "./demo/knight";
+import { start as startBallDemo } from "./demo/ball";
 import { GameEngine } from "./engine/engine";
-import { GameController } from "./game";
 
 const getSize = (pixelScale: number) => {
   const maxW = window.innerWidth / pixelScale;
@@ -10,10 +11,13 @@ const getSize = (pixelScale: number) => {
   return { width, height };
 };
 
-const init = () => {
+export const init = () => {
   const canvas = document.getElementById("canvas") as HTMLCanvasElement;
   if (!canvas) throw new Error("canvas not found");
-  const pixelScale = 4;
+  // const pixelScale = 4;
+
+  const engine = new GameEngine(canvas);
+  const pixelScale = startBallDemo(engine);
 
   const setGameWindowSize = () => {
     const { width, height } = getSize(pixelScale);
@@ -21,11 +25,6 @@ const init = () => {
     canvas.width = width;
     canvas.height = height;
   };
-
-  const engine = new GameEngine(canvas);
-  const controller = engine.createObject(GameController);
-
-  engine.init({ smoothImage: false, scale: pixelScale });
 
   setGameWindowSize();
   window.addEventListener("resize", e => setGameWindowSize());

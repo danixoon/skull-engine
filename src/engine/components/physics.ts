@@ -24,7 +24,7 @@ export class PhysicsComponent extends GameComponent<IPhysicsProps> {
 
     
 
-    if(position[0] - velocity[0] < )
+    // if(position[0] - velocity[0] < )
 
     props.velocity = velocity;
     transform.position = position;

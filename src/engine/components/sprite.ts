@@ -41,7 +41,7 @@ export class SpriteComponent extends GameComponent<ISpriteProps> {
     const { sprite, atlas, spriteId } = this.props;
     if (!sprite) return;
 
-    const [x, y] = atlas ? this.gameObject.getPivotOffset(atlas) : this.gameObject.getPivotOffset([sprite.width, sprite.height] as Vector);
+    const [x, y] = atlas ? this.gameObject.transform.getPivotOffset(atlas) : this.gameObject.transform.getPivotOffset([sprite.width, sprite.height] as Vector);
 
     // ctx.globalCompositeOperation()
 

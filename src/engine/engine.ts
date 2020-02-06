@@ -21,7 +21,7 @@ export interface IGameEventLoop {
 
 export abstract class ColliderBounds {
   constructor(public transform: Transform) {}
-  public abstract isCollide = (pos: Vector): boolean => false;
+  public abstract isCollide(pos: Vector): boolean;
 }
 
 export class RectColliderBounds extends ColliderBounds {
@@ -32,15 +32,15 @@ export class RectColliderBounds extends ColliderBounds {
     const { pivot, position, scale } = this.transform;
     const { size, offset } = this.props;
 
-    const pivotOffset = this.transform.getPivotOffset(size);
-    const scaledOffset = multVectorValues(pivotOffset, scale);
-    const positionOffset = addVector(position, addVector(size, scaledOffset));
+    // const pivotOffset = this.transform.getPivotOffset(size);
+    // const scaledOffset = multVectorValues(pivotOffset, scale);
+    // const positionOffset = addVector(position, addVector(size, scaledOffset));
 
-    const transformedRect = addVector(position, addVector(positionOffset, multVectorValues(offset, scale)));
-    const [px, py] = subVector(transformedRect, pos);
+    // const transformedRect = addVector(position, addVector(positionOffset, multVectorValues(offset, scale)));
+    // const [px, py] = subVector(transformedRect, pos);
 
-    // И проверяем столкновение с помощью проекции
-    return px >= 0 && px <= size[0] && py >= 0 && py <= size[1];
+    // // И проверяем столкновение с помощью проекции
+    // return px >= 0 && px <= size[0] && py >= 0 && py <= size[1];
 
     return true;
 
@@ -107,6 +107,9 @@ export class GameEngine {
 
   private proceedLoop = (delta: number) => {
     const { ctx, camera } = this;
+    ctx.resetTransform();
+    // Инверсия для оси Y
+    // ctx.scale(0, -1);
 
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
@@ -127,9 +130,9 @@ export class GameEngine {
               ctx.translate(Math.floor(ctx.canvas.width * this.camera.pivot[0]), Math.floor(ctx.canvas.height * this.camera.pivot[1]));
               ctx.translate(...(camera.position.map(v => -Math.floor(v)) as Vector));
               // Если есть родитель устанавливаем его матрицу для нашего объекта
-              if (o.parent) ctx.transform(...o.parent.localTransformMatrix);
+              // if (o.parent) ctx.transform(...o.parent.transformMatrix);
               // А потом двигаем и нас
-              ctx.transform(...o.localTransformMatrix);
+              ctx.transform(...o.transformMatrix);
 
               ctx.rotate(camera.angle);
               // И рисуем
